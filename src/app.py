@@ -2,13 +2,13 @@ from Mybot import main
 import schedule
 import time
 from datetime import datetime,timedelta
-
 from Mybot import logger
 
 
 def job():
     """需要执行的任务"""
     main("售后维修部")
+    # main("人机")
     logger.info(f"任务执行时间: {datetime.now()}")
 
     # 如果是 8:00 运行的任务，安排下一次任务在 2 小时后
@@ -49,7 +49,7 @@ def schedule_jobs():
 
 def run():
     # 启动时立即运行一次
-    # job()
+    job()
 
     # 安排任务
     schedule_jobs()

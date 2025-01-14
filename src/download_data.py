@@ -1,5 +1,3 @@
-import time
-
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
@@ -92,3 +90,4 @@ def navigate_to_page_and_download_data(driver, filename,day):
 
     time.sleep(12)
     driver.quit()
+

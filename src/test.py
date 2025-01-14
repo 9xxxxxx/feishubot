@@ -1,51 +1,20 @@
-import hashlib
-import time
-import uuid
-from urllib.parse import quote
+from playwright.sync_api import sync_playwright
 
-import requests
+# 使用 Playwright 截图
+with sync_playwright() as p:
+    # 启动浏览器
+    browser = p.chromium.launch(headless=True)
+    page = browser.new_page()
 
-pageindex = "1"
-conditions = '{"new_signedon":"5"}'
+    # 打开网页
+    url = "http://172.16.102.217:8888/"
+    page.goto(url)
 
-def generate_requrl(pageindex,conditions):
+    # 截图并保存
+    output_file = "example_playwright.png"
+    page.screenshot(path=output_file, full_page=True)
 
-    """
-    从 API 获取数据并转换为 DataFrame
-    """
-    # 基本参数
-    tenant = "laifen"
-    api_name = "api/vlist/ExecuteQuery"
-    timestamp = str(int(time.time() * 1000))
-    reqid = str(uuid.uuid1())
-    appid = "AS_department"
-    queryid = "38c53a54-813f-a0e0-0000-06f40ebdeca5"
-    is_user_query = "true"
-    is_preview = "false"
-    pagesize = "5000"
-    paging = "true"
-    key = "u7BDpKHA6VSqTScpEqZ4cPKmYVbQTAxgTBL2Gtit"
-    orderby = "createdon descending"
-    additionalConditions = quote(conditions, safe='')
+    # 关闭浏览器
+    browser.close()
 
-    args = [conditions, appid, orderby, pageindex, pagesize, paging, reqid, tenant, timestamp, is_preview, is_user_query, queryid, key]
-    
-    """
-    生成签名
-    """
-    
-    sign_str = "".join(args)
-    sign = hashlib.sha256(sign_str.encode('utf-8')).hexdigest().upper()
-    #构建 URL
-    url = (
-        f"https://ap6-openapi.fscloud.com.cn/t/{tenant}/open/{api_name}"
-        f"?$tenant={tenant}&$timestamp={timestamp}&$reqid={reqid}&$appid={appid}"
-        f"&queryid={queryid}&isUserQuery={is_user_query}&isPreview={is_preview}"
-        f"&$pageindex={pageindex}&$pagesize={pagesize}&$paging={paging}"
-        f"&$additionalConditions={additionalConditions}&$orderby={orderby}&$sign={sign}"
-    )
-
-    return url
-
-url = generate_requrl(pageindex,conditions)
-print(url)
+print(f"网页快照已保存为 {output_file}")
