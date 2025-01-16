@@ -18,7 +18,7 @@ import logging
 logging.basicConfig(
     level=logging.INFO,  # 设置日志级别
     format='%(asctime)s - %(levelname)s - %(message)s',
-    filename='app.log',  # 日志文件名
+    filename='../src/app.log',  # 日志文件名
     filemode='a',  # 追加模式
     encoding='utf-8",',
 )
