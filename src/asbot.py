@@ -1,11 +1,9 @@
 import requests
-from matplotlib.font_manager import json_dump
 from requests_toolbelt import MultipartEncoder
 from config import asbot_config
 from my_utility import logger
 import json
 
-from src.old_car import get_chat_id
 
 
 class AsBot:
@@ -196,7 +194,7 @@ class AsBot:
             logger.info('好像不行哦~')
 
     def send_post_to_person(self,msg,user_id):
-        # 消息的构造只需要一个post参数，content参数后面接zh-cn之后的内容
+        # 消息的构造只需要一个mdg_type指定post参数，content参数后面接zh-cn之后的内容
         url = "https://open.feishu.cn/open-apis/im/v1/messages"
         params = {"receive_id_type": "user_id"}
         payload = {

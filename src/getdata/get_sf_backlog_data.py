@@ -4,7 +4,7 @@ import uuid
 from urllib.parse import quote
 import requests
 import pandas as pd
-from src.my_utility import logger
+from my_utility import logger
 
 
 def generate_requrl(pageindex,conditions,page):
@@ -94,7 +94,7 @@ def extract_need_data(df):
     logger.info(f"成功提取所需数据,共{df.shape[1]}列")
     return df
 
-def getdata(path, days):
+def get_sf_data(path, days):
     logger.info(f"正在下载最近{days}天的数据")
     pageindex = "1"
     conditions = f'{{"new_signedon":{days}}}'

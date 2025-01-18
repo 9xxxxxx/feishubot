@@ -1,4 +1,4 @@
-from src.my_utility import logger
+from my_utility import logger
 import pandas as pd
 import os
 

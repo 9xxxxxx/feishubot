@@ -5,6 +5,9 @@ from datetime import datetime
 import xlwings as xw
 from PIL import ImageGrab
 import logging
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
+
 
 logging.basicConfig(
     level=logging.INFO,  # 设置日志级别
@@ -259,3 +262,90 @@ def makeimage(quanlity, path):
 
     # 退出 Excel
     wb.close()
+
+
+
+
+def generate_asd_wc_image(df,path,title):
+    logger.info("开始生成售后业务量预计图")
+    # 获取唯一的取件天数分类
+    categories = df['取件天数'].unique().tolist()
+    categories.sort()
+    # 创建子图
+    fig = make_subplots(
+        rows=2,  # 两行布局
+        cols=4,  # 四列布局
+        row_heights=[0.8, 0.2],  # 第一行高度占 80%，第二行高度占 20%
+        vertical_spacing=0.05,  # 减小行间距
+        specs=[
+            [{"type": "pie"}, {"type": "pie"}, {"type": "pie"}, {"type": "pie"}],  # 第一行是 4 个饼图
+            [{"type": "domain", "colspan": 4}, None, None, None]  # 第二行用于文字，跨 4 列
+        ],
+        subplot_titles=categories  # 子标题
+    )
+
+    # 动态添加饼图
+    for i, category in enumerate(categories, start=1):
+        filtered_df = df.query(f"取件天数 == '{category}'")
+        labels = filtered_df['地区'].tolist()
+        values = filtered_df['数量'].tolist()
+
+        fig.add_trace(
+            go.Pie(
+                labels=labels,
+                values=values,
+                hole=0.3,
+                textinfo='label+value',
+                textposition='inside',
+                sort=False
+            ),
+            row=1,
+            col=i
+        )
+
+    # 添加文字说明
+    text = """
+    1. 华北地区：北京市、天津市、河北省、山西省、内蒙古自治区<br>
+    2. 华东地区：上海市、江苏省、浙江省、安徽省、福建省、江西省、山东省、台湾省<br>
+    3. 华中地区：河南省、湖北省、湖南省<br>
+    4. 华南地区：广东省、广西壮族自治区、海南省、香港特别行政区、澳门特别行政区<br>
+    5. 西南地区：重庆市、四川省、贵州省、云南省、西藏自治区<br>
+    6. 西北地区：陕西省、甘肃省、青海省、宁夏回族自治区、新疆维吾尔自治区<br>
+    7. 东北地区：辽宁省、吉林省、黑龙江省<br>
+    """
+
+    fig.add_annotation(
+        x=0.5,  # 文字水平居中
+        y=0.05,  # 文字垂直位置（靠近底部）
+        text=text,  # 文字内容
+        showarrow=False,  # 不显示箭头
+        font=dict(size=12, color="black"),  # 字体样式
+        xref="paper",  # 使用相对坐标
+        yref="paper",  # 使用相对坐标
+        align="left",  # 文字左对齐
+        xanchor="center",  # 文字水平锚点居中
+        yanchor="top"  # 文字垂直锚点顶部对齐
+    )
+
+
+    # 更新布局
+    fig.update_layout(
+        title_text=title,
+        title_x=0.5,  # 主标题居中
+        title_y=0.95,  # 调整主标题的垂直位置
+        showlegend=True,
+        width=1000,  # 增加宽度以容纳 4 个饼图
+        height=500,  # 增加高度以容纳文字
+        margin=dict(l=20, r=20, t=80, b=150),  # 增加底部边距以容纳文字
+        title_font=dict(size=28)
+    )
+
+    # 调整子标题位置
+    for annotation in fig.layout.annotations:
+        if annotation.text in categories:  # 饼图子标题
+            annotation.update(y=0.15, font=dict(size=16))
+
+    # 显示图表
+    logger.info(f'图片生成成功，保存至{path}')
+    # 保存图表
+    fig.write_image(path, scale=3)

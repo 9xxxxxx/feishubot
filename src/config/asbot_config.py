@@ -41,12 +41,13 @@ outpath = fr'E:/Works/售后Bot/data/output/{outfilename}'
 
 
 # 文件路径
-image_path = r'E:\Works\售后Bot\data\image\data.png'
-image_path2 = r'E:\Works\售后Bot\data\image\data0.png'
-image_path3 = r'E:\Works\售后Bot\data\image\data1.png'
+image_path1 = r'E:\Dev\AS_Bot\data\image\data.png'
+image_path2 = r'E:\Dev\AS_Bot\data\image\data0.png'
+image_path3 = r'E:\Dev\AS_Bot\data\image\data1.png'
 
 
 # 标题
 title1 = f'寄修数据实时汇报--{show_in_group}'
 title2 = f'快递单时效分布4到货量预估--{show_in_group}'
 title3 = f'退换货分拣数据实时汇报--{show_in_group}'
+# print(DB_STRING)
