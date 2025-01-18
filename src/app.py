@@ -1,4 +1,5 @@
-from main import main, logger
+from main import sendgoods_data,sf_and_returns_data
+from my_utility import logger
 import schedule
 import time
 from datetime import datetime, timedelta
@@ -9,19 +10,18 @@ class TaskScheduler:
         """初始化任务调度器"""
         self.schedule = schedule
 
-
     def job(self, department="售后维修部"):
         """需要执行的任务"""
-        main()
-        logger.info(f"任务执行时间: {datetime.now()}")
+        sf_and_returns_data(department)
+        
+        logger.info(f"任务job1执行时间: {datetime.now()}")
 
-        # 如果是 8:00 运行的任务，安排下一次任务在 2 小时后
-        if datetime.now().time() == datetime.strptime("08:00", "%H:%M").time():
-            next_run_time = datetime.now() + timedelta(hours=2)
-            self.schedule.clear()  # 清除所有已安排的任务
-            self.schedule.every().day.at(next_run_time.strftime("%H:%M")).do(self.job)
-            self.schedule_jobs()  # 重新安排其他任务
+ 
 
+    def job2(self, department="售后维修部"):
+        sendgoods_data(department)
+        logger.info(f"任务job2执行时间: {datetime.now()}")
+        
     def is_time_between(self, start_time, end_time):
         """检查当前时间是否在指定时间范围内"""
         now = datetime.now().time()
@@ -42,14 +42,18 @@ class TaskScheduler:
         """安排任务"""
         # 每天 8:00 运行一次
         self.schedule.every().day.at("08:00").do(self.job)
-
+        
         # 每两个小时运行一次，但跳过 22:00 点
         for hour in range(10, 22, 2):  # 从 10 点到 20 点，每两小时一次
             self.schedule.every().day.at(f"{hour:02d}:00").do(self.run_job_if_time_allowed)
 
         # 每天 22:00 运行最后一次
         self.schedule.every().day.at("22:00").do(self.job)
-
+        
+        # 每天 9:00 和 17:00 运行 job2
+        self.schedule.every().day.at("09:00").do(self.job2)
+        self.schedule.every().day.at("17:00").do(self.job2)
+        
     def run(self):
         """启动任务调度器"""
         # 启动时立即运行一次

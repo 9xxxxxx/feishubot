@@ -10,10 +10,10 @@ from config import asbot_config
 
 warnings.filterwarnings('ignore')
 
-def main():
-    logger.info("starting Work~")
+def sf_and_returns_data(dp):
+    logger.info("发送寄修以及分拣一检积压数据")
     # 实例化机器人
-    asbot = AsBot('人机')
+    asbot = AsBot(dp)
 
     show_in_group = asbot_config.show_in_group
     outfilename = asbot_config.outfilename
@@ -23,12 +23,11 @@ def main():
 
     image_path1 = asbot_config.image_path1
     image_path2 = asbot_config.image_path2
-    image_path3 = asbot_config.image_path3
 
-    
+
     title1 = asbot_config.title1
     title2 = asbot_config.title2
-    title3 = asbot_config.title3
+
     
     config_path = 'config/config.json'
     config = read_config(config_path)
@@ -48,13 +47,23 @@ def main():
     asbot.sendimage(image_path=image_path2)
     
     
-    # 获取发送分拣数据
-    dc_data = data_wait4check_and_detect(path=path)
-    export_dataframe_to_image_for_normal(dc_data,image_path3,title=title3)
-    asbot.sendimage(image_path=image_path3)
-    
     config['last_fp'] = path
     write_config(config_path, config)
     
-    logger.info("finishing Work&Work successfully~")
-    logger.info(f'下次执行将在--{datetime.now() + timedelta(hours=2)}')
+    logger.info("寄修以及分拣一检积压数据发送成功")
+
+    
+    
+def sendgoods_data(dp):
+    logger.info('发送快递量预测数据')
+    # 实例化机器人
+    asbot = AsBot(dp)
+    image_path2 = asbot_config.image_path2
+
+    title2 = asbot_config.title2
+
+    # 获取发送快递量预测数据
+    data2send0 = make_sendgoods_data()
+    generate_asd_wc_image(data2send0,image_path2,title=title2)
+    asbot.sendimage(image_path=image_path2)
+    logger.info('快递量预测数据发送成功')
