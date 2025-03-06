@@ -8,7 +8,8 @@ import logging
 import numpy as np
 import schedule
 import time
-
+from Sync_QcRecord import sync_qcrecord_data
+from Sync_ExChangeComponents import sync_exchange_component_data
 
 # 配置日志
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -228,6 +229,9 @@ def main():
 def job_sync_db():
     logging.info(f'任务开始运行~at{datetime.now()}')
     main()
+    sync_qcrecord_data()
+    sync_exchange_component_data()
+
 
 # 程序入口
 if __name__ == '__main__':
