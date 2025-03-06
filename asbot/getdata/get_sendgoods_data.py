@@ -7,6 +7,8 @@ import pandas as pd
 from sqlalchemy import create_engine
 from my_utility import logger
 
+# 获取售后物流数据
+
 conn = create_engine("mysql+pymysql://root:000000@localhost/demo")
 p_by_r = pd.read_sql('select 地区,省份 from provinces_by_region', con=conn)
 

@@ -6,6 +6,7 @@ import requests
 import pandas as pd
 from my_utility import logger
 
+# 获取寄修数据积压数据
 
 def generate_requrl(pageindex,conditions,page):
     logger.info(f"正在生成第{page}页的URL")

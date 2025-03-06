@@ -2,18 +2,18 @@ import warnings
 from data_process import *
 from my_utility import *
 from asbot import AsBot
-
+from getdata.get_checkgroup_efficiency import build_card_message
 from getdata import *
 from config import asbot_config
 
 warnings.filterwarnings('ignore')
 path = None
+
 def sf_and_returns_data(dp,days):
     global path
     logger.info("正在初始化机器人--开始发送寄修以及退换货数据")
     # 实例化机器人
     asbot = AsBot(dp)
-
 
     outfile_path = asbot_config.get_output_file_path()
     showdate = asbot_config.showdate()
@@ -49,8 +49,6 @@ def sf_and_returns_data(dp,days):
     
     logger.info("寄修以及分拣一检积压数据发送成功")
 
-    
-    
 def sendgoods_data(dp):
     logger.info('发送快递量预测数据')
     # 实例化机器人
@@ -64,7 +62,6 @@ def sendgoods_data(dp):
     asbot.sendimage(image_path=image_path2)
     time.sleep(1)
     logger.info('快递量预测数据发送成功')
-
 
 def send_crm_data(dp):
     logger.info('发送一天内创单数据')
@@ -81,4 +78,13 @@ def send_crm_data(dp):
     time.sleep(1)
     logger.info('发送一天内创单数据成功')
 
-print(path)
+def send_checkgroup_efficiency(dp):
+    logger.info('发送当月以及当天分拣退换货时效数据')
+    payload = build_card_message()
+    asbot = AsBot(dp)
+    asbot.send_card_to_group(payload)
+    time.sleep(1)
+    logger.info('发送当月以及当天分拣退换货时效数据成功')
+
+if __name__ == '__main__':
+    send_checkgroup_efficiency('人机')

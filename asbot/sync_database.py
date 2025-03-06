@@ -127,7 +127,8 @@ def process_data(a):
         new_errorclassifly_name = a['new_errorclassifly_id'].apply(lambda x: x.get('name') if pd.notnull(x) else None),
         new_error_name = a['new_error_id'].apply(lambda x: x.get('name') if pd.notnull(x) else None),
         new_fromsource = a['FormattedValues'].apply(lambda x: x.get('new_srv_rma_0.new_fromsource') if pd.notnull(x) else None),
-        order_id = a['new_srv_rma_0.laifen_xdorderid']
+        order_id = a['new_srv_rma_0.laifen_xdorderid'],
+        new_workorder_id=a['new_workorder_id'].apply(lambda x: x.get('name') if pd.notnull(x) else None)
 
     )
 
@@ -136,7 +137,7 @@ def process_data(a):
         ['new_rma_id', 'productmodel_name', 'product_name', 'laifen_productnumber', 'new_returnstatus', 'new_status',
          'applytype', 'per_name_fenjian', 'per_name_yijian', 'per_name_weixiu','createdon', 'new_signedon', 'new_checkon',
          'laifen_servicecompletetime', 'laifen_qualityrecordtime', 'new_deliveriedon','new_userprofilesn','laifen_jstsalesorderid',
-         'new_errorclassifly_name','new_error_name','new_fromsource','order_id']]
+         'new_errorclassifly_name','new_error_name','new_fromsource','order_id','new_workorder_id']]
 
     # Replace return status and new status using map
     returnstatus_mapping = {

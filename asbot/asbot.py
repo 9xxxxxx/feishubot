@@ -29,7 +29,7 @@ class AsBot:
         "app_id": self.app_id,
         "app_secret": self.app_secret
         }
-        response = requests.request("POST", url, data=data)
+        response = requests.request("POST", url, data=data,timeout=30)
         logger.info("成功获取bearer token")
         return json.loads(response.text)['tenant_access_token']
 
@@ -227,3 +227,54 @@ class AsBot:
             logger.info(f'{response.status_code}-发送成功')  # Print Response
         else:
             logger.info('好像不行哦~')
+
+    
+    def send_card_to_person(self,msg,user_id):
+  
+        url = "https://open.feishu.cn/open-apis/im/v1/messages"
+        params = {"receive_id_type": "user_id"}
+        payload = {
+            "receive_id": user_id,  # chat id
+            "msg_type": "interactive",
+            "content": json.dumps(msg)
+        }
+        headers = {
+            'Authorization': f'Bearer {self.token}',  # your access token
+            'Content-Type': 'application/json'
+        }
+        response = requests.request("POST", url, params=params, headers=headers, json=payload)
+        if response.status_code == 200:
+            logger.info(f'{response.status_code}-发送成功')  # Print Response
+        else:
+            logger.info('好像不行哦~')
+            
+    def send_card_to_group(self,msg):
+
+        url = "https://open.feishu.cn/open-apis/im/v1/messages"
+        params = {"receive_id_type": "chat_id"}
+        payload = {
+            "receive_id": self.chat_id,  # chat id
+            "msg_type": "interactive",
+            "content": msg
+        }
+        headers = {
+            'Authorization': f'Bearer {self.token}',  # your access token
+            'Content-Type': 'application/json'
+        }
+        response = requests.request("POST", url, params=params, headers=headers, json=payload)
+        if response.status_code == 200:
+            logger.info(f'{response.status_code}-发送成功')  # Print Response
+        else:
+            logger.info('好像不行哦~')
+            print(response.text)
+
+
+#消息示例
+# payload = json.dumps({
+#   "content": "{\"type\":\"template\",\"data\":{\"template_id\":\"AAqBc0EeBjtyz\",\"template_version_name\":\"1.0.2\",\"template_variable\":{\"title\":\"哇，真的是你啊\"}}}"
+# })
+# headers = {
+#   'Authorization': 'Bearer t-g1042kjf6KMSYE44K3MX2FPROJCU6OLEMWCYLQ7Y',
+#   'Content-Type': 'application/json'
+# }
+

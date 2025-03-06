@@ -11,7 +11,7 @@ from plotly.subplots import make_subplots
 logging.basicConfig(
     level=logging.INFO,  # 设置日志级别
     format='%(asctime)s - %(levelname)s - %(message)s',
-    filename='../log/app.log',  # 日志文件名
+    filename=r"E:\Dev\AS_Bot\log\app.log",  # 日志文件名
     filemode='a',  # 追加模式
     encoding='utf-8",',
 )

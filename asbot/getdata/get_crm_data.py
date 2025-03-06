@@ -1,6 +1,6 @@
 import pandas as pd
 
-
+# 获取crm手工创单量
 def get_crm_data(path):
     df = pd.read_excel(path)
     df = df[['单号', '单据来源', '创建时间', '旧件签收时间']]

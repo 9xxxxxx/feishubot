@@ -1,7 +1,7 @@
 from my_utility import logger
 import pandas as pd
 import os
-
+# 待检测数据和待一检数据
 def data_wait4check_and_detect(path):
     _,extension = os.path.splitext(path)
     df = None
@@ -26,12 +26,12 @@ def data_wait4check_and_detect(path):
     df = df.reset_index()
     
     df0 = df.query("状态 == '待一检'").copy()
-    new_row0 = pd.DataFrame({'状态':'总计','产品类型':'-','单号':df0['单号'].sum()},index=[0])
+    new_row0 = pd.DataFrame({'状态':'待一检总计','产品类型':'-','单号':df0['单号'].sum()},index=[0])
     df0 = pd.concat([df0,new_row0],ignore_index=True)
     df0 = df0.sort_values('单号',ascending=False)
     
     df1 = df.query("状态 == '待分拣'").copy()
-    new_row1= pd.DataFrame({'状态':'总计','产品类型':'-','单号':df1['单号'].sum()},index=[0])
+    new_row1= pd.DataFrame({'状态':'待分拣总计','产品类型':'-','单号':df1['单号'].sum()},index=[0])
     df1 = pd.concat([df1,new_row1],ignore_index=True)
     df1 = df1.sort_values('单号',ascending=False)
     
