@@ -1,4 +1,4 @@
-from main import sendgoods_data,sf_and_returns_data,send_crm_data,send_checkgroup_efficiency
+from main import sendgoods_data,send_returns_data,send_crm_data,send_checkgroup_efficiency
 from my_utility import logger
 import schedule
 import time
@@ -10,12 +10,12 @@ class TaskScheduler:
         """初始化任务调度器"""
         self.schedule = schedule
         self.department = "售后维修部"
-        self.days = "10"
-        print('job1-发送寄修积压数据\njob2-发送物流\njob3-发送创单时间以及签收时间小于一天的数据\njob4-发送分拣时效数据卡片')
-    # 发送寄修积压数据
+        self.days = "15"
+        print('job1-发送寄修积压数据\njob2-发送物流\njob3-发送创单时间以及签收时间小于一天的数据\njob4-4小时分拣时效小于85%发送数据')
+    # 发送分拣积压数据
     def job1(self):
         """在允许的时间范围内运行任务"""
-        sf_and_returns_data(self.department,self.days)
+        send_returns_data(self.department)
         logger.info(f"job1(发送寄修积压数据),执行时间: {datetime.now()}")
 
     # 发送物流数据
@@ -82,5 +82,6 @@ class TaskScheduler:
 
 
 if __name__ == "__main__":
+
     scheduler = TaskScheduler()
     scheduler.run()

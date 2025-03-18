@@ -9,7 +9,8 @@ from config import asbot_config
 warnings.filterwarnings('ignore')
 path = None
 
-def sf_and_returns_data(dp,days):
+# 寄修积压
+def send_sf_data(dp,days):
     global path
     logger.info("正在初始化机器人--开始发送寄修以及退换货数据")
     # 实例化机器人
@@ -20,7 +21,7 @@ def sf_and_returns_data(dp,days):
 
     type_file = asbot_config.TYPE_FILE
     image_path1 = asbot_config.image_path1
-    image_path3 = asbot_config.image_path3
+
     path = asbot_config.get_input_file_path()
     
     config_path = 'config/config.json'
@@ -37,18 +38,24 @@ def sf_and_returns_data(dp,days):
     asbot.sendfile("xls", file_name=asbot_config.get_send_file_name(), file_path=outfile_path,type_file=type_file)
     time.sleep(1)
 
-    # 获取发送分拣积压数据
-    dc_data = data_wait4check_and_detect(path=path)
-    export_dataframe_to_image_for_normal(dc_data,image_path3,title=asbot_config.get_fjjy_title2())
-    asbot.sendimage(image_path=image_path3)
-    time.sleep(1)
-    
-    
     config['last_fp'] = path
     write_config(config_path, config)
     
-    logger.info("寄修以及分拣一检积压数据发送成功")
+    logger.info("寄修积压数据发送成功")
 
+
+# 分拣积压
+def send_returns_data(dp):
+    data = get_sf_data()
+    image_path3 = asbot_config.image_path3
+    asbot = AsBot(dp)
+    dc_data = data_wait4check_and_detect(data)
+    export_dataframe_to_image_for_normal(dc_data,image_path3,title=asbot_config.get_fjjy_title2())
+    asbot.sendimage(image_path=image_path3)
+    time.sleep(1)
+    logger.info("分拣一检积压数据发送成功")
+
+# 快递物流预测
 def sendgoods_data(dp):
     logger.info('发送快递量预测数据')
     # 实例化机器人
@@ -63,6 +70,7 @@ def sendgoods_data(dp):
     time.sleep(1)
     logger.info('快递量预测数据发送成功')
 
+# 手工创单量
 def send_crm_data(dp):
     logger.info('发送一天内创单数据')
     # 实例化机器人
@@ -78,13 +86,17 @@ def send_crm_data(dp):
     time.sleep(1)
     logger.info('发送一天内创单数据成功')
 
+# 分拣时效预警
 def send_checkgroup_efficiency(dp):
     logger.info('发送当月以及当天分拣退换货时效数据')
-    payload = build_card_message()
-    asbot = AsBot(dp)
-    asbot.send_card_to_group(payload)
-    time.sleep(1)
-    logger.info('发送当月以及当天分拣退换货时效数据成功')
+    payload,condition = build_card_message()
+    if condition < 0.85:
+        asbot = AsBot(dp)
+        asbot.send_card_to_group(payload)
+        time.sleep(1)
+        logger.info('发送当月以及当天分拣退换货时效数据成功')
+    else:
+        print(f'四小时内时效占比合格，为{round(condition,2)}%,达85%，不发送预警')
 
 if __name__ == '__main__':
-    send_checkgroup_efficiency('人机')
+    sendgoods_data('【售后维修部】吐槽群')

@@ -1,19 +1,20 @@
 from my_utility import logger
 import pandas as pd
 import os
+
 # 待检测数据和待一检数据
-def data_wait4check_and_detect(path):
-    _,extension = os.path.splitext(path)
-    df = None
-    if extension == '.csv':
-        df = pd.read_csv(path)
-    elif extension == '.xlsx':
-        df = pd.read_excel(path)
-    else:
-        logger.info('文件类型错误,只接受csv或者xlsx文件')
-        return
+def data_wait4check_and_detect(data):
+    # _,extension = os.path.splitext(path)
+    # df = None
+    # if extension == '.csv':
+    #     df = pd.read_csv(path)
+    # elif extension == '.xlsx':
+    #     df = pd.read_excel(path)
+    # else:
+    #     logger.info('文件类型错误,只接受csv或者xlsx文件')
+    #     return
     
-    df = df.query("申请类别!= '寄修/返修' and 处理状态!='已取消' and 检测结果 != '异常'")
+    df = data.query("申请类别!= '寄修/返修' and 处理状态!='已取消' and 检测结果 != '异常'")
 
     df['状态'] = '-'
 

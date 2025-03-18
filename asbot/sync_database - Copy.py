@@ -4,14 +4,13 @@ import pandas as pd
 import pymysql
 from datetime import datetime, timedelta
 import hashlib
-import logging
+from my_utility import logger
 import numpy as np
 import schedule
 import time
-
-
-# 配置日志
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+from Sync_QcRecord import sync_qcrecord_data
+from Sync_ExChangeComponents import sync_exchange_component_data
+from asbot import AsBot
 
 # 配置类
 class Config:
@@ -52,7 +51,7 @@ def get_url(api_name, queryid, pageindex, pagesize, isUserQuery, isPreview, pagi
 
 # Function to get data from API URL
 def get_data(url):
-    logging.info(f"正在请求API: {url}")
+    logger.info(f"正在请求API: {url}")
     try:
         response = requests.get(url)
         response.raise_for_status()
@@ -60,21 +59,21 @@ def get_data(url):
 
         # 检查返回数据是否包含 'Data' 字段
         if 'Data' not in data or 'Entities' not in data['Data']:
-            logging.error(f"返回数据格式异常: {data}")
+            logger.error(f"返回数据格式异常: {data}")
             return []
 
-        logging.info(f"请求成功，返回数据：{len(data['Data']['Entities'])}条")
+        logger.info(f"请求成功，返回数据：{len(data['Data']['Entities'])}条")
         return data['Data']['Entities']
     except requests.exceptions.RequestException as e:
-        logging.error(f"请求失败: {e}")
+        logger.error(f"请求失败: {e}")
         return []
     except Exception as e:
-        logging.error(f"未知错误: {e}")
+        logger.error(f"未知错误: {e}")
         return []
 
 # Function to get a list of data
 def get_list():
-    logging.info("开始获取数据...")
+    logger.info("开始获取数据...")
     total_count = 0
     pages = 0
     all_data = []
@@ -86,17 +85,17 @@ def get_list():
 
     # 检查是否请求成功
     if 'Data' not in data:
-        logging.error(f"请求失败，返回数据格式异常: {data}")
+        logger.error(f"请求失败，返回数据格式异常: {data}")
         return pd.DataFrame()
 
     total_count = data['Data']['TotalRecordCount']
     pages = (total_count + Config.PAGE_SIZE - 1) // Config.PAGE_SIZE
 
-    logging.info(f"总数据条数: {total_count}, 分页数: {pages}")
+    logger.info(f"总数据条数: {total_count}, 分页数: {pages}")
 
     # 分页请求数据
     for i in range(1, pages + 1):
-        logging.info(f"正在请求第{i}页数据...")
+        logger.info(f"正在请求第{i}页数据...")
         url = get_url(Config.API_NAME, Config.QUERY_ID, i, Config.PAGE_SIZE, Config.IS_USER_QUERY, Config.IS_PREVIEW, Config.PAGING, Config.CONDITIONS)
         page_data = get_data(url)
         all_data.extend(page_data)
@@ -104,13 +103,13 @@ def get_list():
 
     df = pd.DataFrame(all_data)
 
-    logging.info(f"获取数据完成，共计{len(df)}条数据")
+    logger.info(f"获取数据完成，共计{len(df)}条数据")
     return df
 
 # Function to process and clean the data
 def process_data(a):
 
-    logging.info("开始数据处理...")
+    logger.info("开始数据处理...")
     a_1 = a.assign(
         productmodel_name=a['new_productmodel_id'].apply(lambda x: x.get('name') if isinstance(x, dict) else None),
         product_name=a['new_product_id'].apply(lambda x: x.get('name') if isinstance(x, dict) else None),
@@ -120,13 +119,13 @@ def process_data(a):
         per_name_yijian=a['laifen_systemuser_id'].apply(lambda x: x.get('name') if isinstance(x, dict) else None),
         per_name_weixiu=a['new_srv_workorder_1.new_srv_worker_id'].apply(lambda x: x.get('name') if isinstance(x, dict) else None),
         new_rma_id=a['new_rma_id'].apply(lambda x: x.get('name') if isinstance(x, dict) else None),
-
         createdon=a['FormattedValues'].apply(lambda x: x.get('createdon')),
         new_userprofilesn=a['new_userprofilesn'],
         laifen_jstsalesorderid = a['new_srv_rma_0.laifen_jstsalesorderid'],
         new_errorclassifly_name = a['new_errorclassifly_id'].apply(lambda x: x.get('name') if pd.notnull(x) else None),
         new_error_name = a['new_error_id'].apply(lambda x: x.get('name') if pd.notnull(x) else None),
         new_fromsource = a['FormattedValues'].apply(lambda x: x.get('new_srv_rma_0.new_fromsource') if pd.notnull(x) else None),
+        laifen_onechecktime = a['FormattedValues'].apply(lambda x: x.get('laifen_onechecktime') if pd.notnull(x) else None),
         order_id = a['new_srv_rma_0.laifen_xdorderid'],
         new_workorder_id=a['new_workorder_id'].apply(lambda x: x.get('name') if pd.notnull(x) else None)
 
@@ -137,7 +136,7 @@ def process_data(a):
         ['new_rma_id', 'productmodel_name', 'product_name', 'laifen_productnumber', 'new_returnstatus', 'new_status',
          'applytype', 'per_name_fenjian', 'per_name_yijian', 'per_name_weixiu','createdon', 'new_signedon', 'new_checkon',
          'laifen_servicecompletetime', 'laifen_qualityrecordtime', 'new_deliveriedon','new_userprofilesn','laifen_jstsalesorderid',
-         'new_errorclassifly_name','new_error_name','new_fromsource','order_id','new_workorder_id']]
+         'new_errorclassifly_name','new_error_name','new_fromsource','order_id','new_workorder_id','laifen_onechecktime']]
 
     # Replace return status and new status using map
     returnstatus_mapping = {
@@ -160,7 +159,7 @@ def process_data(a):
     # Replace NaN with None for MySQL compatibility
     a_1 = a_1.replace({np.nan: None})
 
-    logging.info("数据处理完成")
+    logger.info("数据处理完成")
     return a_1
 
 # Function to save data to MySQL database using pymysql
@@ -171,7 +170,7 @@ def save_to_mysql(df):
 
     min_time = min_time.strftime('%Y-%m-%d')
     max_time = max_time.strftime('%Y-%m-%d')
-    logging.info(f"开始插入数据到数据库: {Config.TABLE_NAME}...")
+    logger.info(f"开始插入数据到数据库: {Config.TABLE_NAME}...")
     try:
         # 连接数据库
         conn = pymysql.connect(
@@ -186,13 +185,13 @@ def save_to_mysql(df):
 
         # 清空表
         # cursor.execute(f"TRUNCATE TABLE {Config.TABLE_NAME};")
-        # logging.info(f"已清空表: {Config.TABLE_NAME}")
+        # logger.info(f"已清空表: {Config.TABLE_NAME}")
 
         # 删除已经存在的即将重复的数据
         delete_sql = f"delete from maintenance_detail_ruiyun where date_format(createdon,'%Y-%m-%d %H:%i:%s') between date_format('{str(min_time)}','%Y-%m-%d') and date_format('{str(max_time)}','%Y-%m-%d');"
-        logging.info(f'生成的删除语句\n{delete_sql}')
+        logger.info(f'生成的删除语句\n{delete_sql}')
         affected_rows = cursor.execute(delete_sql)
-        logging.info(f"删除了 {affected_rows} 行数据")
+        logger.info(f"删除了 {affected_rows} 行数据")
         # 动态生成列名和占位符
         columns = ', '.join(df.columns)  # 获取列名，并用逗号分隔
         placeholders = ', '.join(['%s'] * len(df.columns))  # 生成占位符，例如：%s, %s, %s
@@ -202,16 +201,18 @@ def save_to_mysql(df):
             INSERT INTO {Config.TABLE_NAME} ({columns})
             VALUES ({placeholders})
         """
-        logging.info(f"生成的 SQL 插入语句: {sql}")
+        logger.info(f"生成的 SQL 插入语句: {sql}")
 
         # 批量插入数据
         data_tuples = list(df.itertuples(index=False, name=None))
         affected_rows = cursor.executemany(sql, data_tuples)
-        logging.info(f"插入了 {affected_rows} 行数据")
+        logger.info(f"插入了 {affected_rows} 行数据")
         conn.commit()
-        logging.info(f"成功插入{len(df)}条数据")
+        asbot = AsBot('人机黄乾')
+        asbot.send_text_to_group(f'{datetime.now().date()}成功插入{len(df)}条bi数据')
+        logger.info(f"成功插入{len(df)}条数据")
     except pymysql.Error as e:
-        logging.error(f"数据库操作失败: {e}")
+        logger.error(f"数据库操作失败: {e}")
     finally:
         if cursor:
             cursor.close()
@@ -223,15 +224,19 @@ def main():
     a = get_list()
     a_1 = process_data(a)
     save_to_mysql(a_1)
-    logging.info("所有任务已完成")
+    logger.info("所有任务已完成")
 
 def job_sync_db():
-    logging.info(f'任务开始运行~at{datetime.now()}')
+    logger.info(f'任务开始运行~at{datetime.now()}')
+
     main()
+    sync_qcrecord_data()
+    sync_exchange_component_data()
+
 
 # 程序入口
 if __name__ == '__main__':
-    logging.info("gogogo~")
+    logger.info("gogogo~")
     job_sync_db()
     schedule.every().day.at("05:00").do(job_sync_db)
     while True:

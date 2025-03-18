@@ -1,3 +1,5 @@
+from typing import Tuple, Any
+
 import requests
 import time
 import uuid
@@ -85,10 +87,9 @@ def extract_need_data(df):
         发货时间=df['new_deliveriedon'],
         一检人员=df['laifen_systemuser_id'].apply(lambda x: x.get('name', None) if pd.notnull(x) else None),
         发货状态=df['FormattedValues'].apply(lambda x: x.get('new_srv_rma_0.new_deliverstatus', None)),
-        物流单号=df['new_deliverylogisticsnumber'],
+        物流单号=df['new_srv_rma_0.new_returnlogisticsnumber'],
         产品序列号=df['new_userprofilesn'],
-        服务人员=df['new_srv_workorder_1.new_srv_worker_id'].apply(
-            lambda x: x.get('name', None) if pd.notnull(x) else None),
+        服务人员=df['new_srv_workorder_1.new_srv_worker_id'].apply(lambda x: x.get('name', None) if pd.notnull(x) else None),
         单据来源=df["FormattedValues"].apply(lambda x: x.get("new_srv_rma_0.new_fromsource", None)),
         创建时间=df["FormattedValues"].apply(lambda x: x.get("createdon", None)),
     )
@@ -123,7 +124,19 @@ def get_cg_efficiency_data():
 
 def process_checkgroup_efficiency_data():
     df = get_cg_efficiency_data()
-    data = df.query("检测时间.notnull() & 旧件签收时间.notnull() & 申请类别 != '寄修/返修'").copy()
+    data = df.query("检测时间.notnull() & 旧件签收时间.notnull() & 申请类别 != '寄修/返修'& 处理状态 != '已取消'").copy()
+
+
+    pj = data.query("产品类型 == '产成品-吹风机配件' or 产品类型 == '产成品-电动牙刷配件'").copy()
+    pj['独立配件'] = pj.groupby('物流单号')['单号'].transform('nunique')
+    pj = pj[pj['独立配件'] ==1 ].query("产品类型 == '产成品-吹风机配件' or 产品类型 == '产成品-电动牙刷配件'")
+    pj = pj.drop(['独立配件'],axis=1)
+
+    data = data.query("产品类型 == '产成品-吹风机' or 产品类型 == '产成品-电动牙刷'").copy()
+
+    data = pd.concat([data, pj], ignore_index=True)
+
+
     data['旧件签收时间'] = pd.to_datetime(data['旧件签收时间'])
     data['检测时间'] = pd.to_datetime(data['检测时间'])
     data['日期'] = data['检测时间'].dt.date
@@ -141,10 +154,12 @@ def process_checkgroup_efficiency_data():
 
     today = pd.DataFrame(today['时效类型'].value_counts())
     today['占比'] = today['count'] / today['count'].sum()
+    today['比率'] = today['count'] / today['count'].sum()
     today = today.rename(columns={'count': '数量'})
     today = today.fillna(0)
     today['占比'] = today['占比'].apply(lambda x: f'{round(x * 100)}%')
     today = today.astype(str)
+    today['比率'] = today['比率'].astype(float)
 
     return history, today
 
@@ -213,7 +228,7 @@ def build_chart_data(title,value1,value2,value3,value4,rate1,rate2,rate3,rate4):
     })
     return data
 
-def build_card_message() -> str:
+def build_card_message() -> tuple[str, Any]:
     """
     构造可动态配置的嵌套JSON消息
 
@@ -266,4 +281,4 @@ def build_card_message() -> str:
     }
     logger.info("数据卡片构建成功")
     # 构造完整消息
-    return json.dumps(content, ensure_ascii=False)
+    return json.dumps(content, ensure_ascii=False),today.loc["4小时内", "比率"]

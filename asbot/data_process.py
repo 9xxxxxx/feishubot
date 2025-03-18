@@ -5,8 +5,8 @@ import pandas as pd
 def extractinfo(path, outpath, showdate):
     # logger.info(f'正在处理-{path}')
     df = pd.read_excel(path)
-    # myrows = df.query(" 发货状态.isnull() or 发货状态 == '待安排发货' ")
-    myrows = df.query("发货时间.isnull()")
+    myrows = df.query(" 发货状态.isnull() or 发货状态 == '待安排发货' ")
+    # myrows = df.query("发货时间.isnull()")
     rydf = myrows.query(" 申请类别 == '寄修/返修' ")
     data_0 = rydf.query("处理状态 != '已取消'")
     data = data_0.query("产品类型 == '产成品-电动牙刷' or 产品类型 == '产成品-吹风机'")
@@ -185,7 +185,8 @@ def extractinfo(path, outpath, showdate):
 def extractinfo_last(last_time_file_path):
     # logger.info(f'正在处理-{path}')
     df = pd.read_excel(last_time_file_path)
-    data_0 = df.query(" 发货时间.isnull() and 申请类别 == '寄修/返修' and 处理状态 != '已取消'")
+    data_0 = df.query(" 发货状态.isnull() or 发货状态 == '待安排发货' ")
+    data_0 = data_0.query(" 申请类别 == '寄修/返修' and 处理状态 != '已取消'")
 
     data = data_0.query("产品类型 == '产成品-电动牙刷' or 产品类型 == '产成品-吹风机'")
 
@@ -359,3 +360,7 @@ def make_jx_data(path,outpath,showdate,last_path):
     send_data['风机流转量'] = send_data['风机流转量'].apply(lambda x: f"{'+' if x > 0 else ''}{x}")
     return send_data
 
+
+
+if __name__ == '__main__':
+    extractinfo(r"E:\Dev\AS_Bot\asbot\getdata\瑞云寄修积压_20250313.xlsx",'15deal.xlsx','最近15')

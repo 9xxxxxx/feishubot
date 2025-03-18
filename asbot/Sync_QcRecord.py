@@ -3,12 +3,39 @@ import time
 import uuid
 import hashlib
 import pandas as pd
+from scipy.stats import expon
+from sqlalchemy import create_engine
 from my_utility import logger
 import json
 from datetime import datetime, timedelta, UTC
-from sqlalchemy import create_engine
+import re
 
-conn = create_engine("mysql+pymysql://root:000000@localhost/demo")
+def clean_string(s):
+    # 去掉所有空格、非字母数字字符并将所有字符转为大写
+    return re.sub(r'\s+', '', str(s)).upper()
+
+# 获取当前日期
+def get_time_interverl_condition():
+    current_date = datetime.now(UTC).replace(hour=0, minute=0, second=0, microsecond=0)
+
+    # 计算起始日期（当前日期减去一天）
+    start_date = current_date - timedelta(days=1)
+
+    # 格式化为ISO 8601格式，包含时区信息
+    start_iso = start_date.strftime("%Y-%m-%dT%H:%M:%SZ")
+    end_iso = current_date.strftime("%Y-%m-%dT%H:%M:%SZ")
+
+    # 构造JSON对象
+    json_obj = [{
+        "name": "createdon",
+        "val": [start_iso, end_iso],
+        "op": "between"
+    }]
+
+    # 生成JSON字符串
+    json_str = json.dumps(json_obj)
+    logger.info(f'查询字符串为--{json_str}')
+    return json_str
 
 
 def generate_requrl(pageindex):
@@ -31,8 +58,10 @@ def generate_requrl(pageindex):
     # orderby = "createdon descending"
     # extendConditions = quote([{"name":"new_checkon","val":"this-month","op":"this-month"}], safe='')
     # additionalConditions = quote({"createdon":"","new_signedon":"","new_checkon":"","laifen_qualityrecordtime":"","laifen_servicecompletetime":""}, safe='')
-    # extendConditions = '[{"name":"createdon","val":["2025-01-01T00:00:00.000Z","2025-01-03T00:00:00.000Z"],"op":"between"}]'
-    extendConditions = get_time_interverl_condition()
+    # extendConditions = '[{"name":"createdon","val":["2025-03-13T00:00:00.000Z","2025-03-15T00:00:00.000Z"],"op":"between"}]'
+    # extendConditions = '[{"name":"createdon","val":"before-today","op":"before-today"},{"name":"createdon","val":"1","op":"last-x-days"}]'
+    # extendConditions = get_time_interverl_condition()
+    extendConditions = '[{"name":"createdon","val":"yesterday","op":"yesterday"}]'
 
     args = [appid, extendConditions, pageindex, pagesize, paging, reqid, tenant, timestamp, is_preview, is_user_query,
             queryid, key]
@@ -85,7 +114,7 @@ def extract_need_data(df):
         质检说明=df['new_memo'].apply(lambda x: x if pd.notnull(x) else None),
     )
     #    # 选择需要的列
-
+    api_data['质检说明'] = api_data['质检说明'].map(clean_string)
     logger.info(f"成功提取所需数据,共{api_data.shape[1]}列")
     return api_data
 
@@ -94,7 +123,6 @@ def get_qcrecord_data():
     logger.info(f"正在下载质检的数据")
     url = generate_requrl("1")
     rs = requests.get(url)
-    print(rs.text)
     count = rs.json()['Data']['TotalRecordCount']
     logger.info(f"当天质检数量共{count}单,共{count // 5000 + 2}页数据")
     datas = []
@@ -107,33 +135,30 @@ def get_qcrecord_data():
 
     df = pd.concat(datas, ignore_index=True)
     df = extract_need_data(df)
-    logger.info(f"已成功下载当月数据")
+    logger.info(f"已成功下载质检数据")
     return df
 
 
 # 获取当前日期
-def get_time_interverl_condition():
-    current_date = datetime.now(UTC).replace(hour=0, minute=0, second=0, microsecond=0)
 
-    # 计算起始日期（当前日期减去一天）
-    start_date = current_date - timedelta(days=1)
-
-    # 格式化为ISO 8601格式，包含时区信息
-    start_iso = start_date.strftime("%Y-%m-%dT%H:%M:%SZ")
-    end_iso = current_date.strftime("%Y-%m-%dT%H:%M:%SZ")
-
-    # 构造JSON对象
-    json_obj = [{
-        "name": "createdon",
-        "val": [start_iso, end_iso],
-        "op": "between"
-    }]
-
-    # 生成JSON字符串
-    json_str = json.dumps(json_obj)
-
-    return json_str
 
 def sync_qcrecord_data():
-    qcdata = get_cg_efficiency_data()
-    qcdata.to_sql('qc_record', conn, if_exists='append', index=False)
+    conn = create_engine("mysql+pymysql://root:000000@localhost/demo")
+    try:
+        qcdata = get_qcrecord_data()
+    except Exception as e:
+        logger.error(e)
+        return
+
+    rows = qcdata.to_sql('qc_record', conn, if_exists='append', index=False)
+    if rows:
+        from asbot import AsBot
+        asbot = AsBot('人机黄乾')
+        asbot.send_text_to_group(f'{datetime.now().date()}成功插入{rows}条质检记录')
+        logger.info(f'成功插入{rows}条质检记录')
+    else:
+        logger.info('更换配件数据更新失败')
+
+
+if '__main__' == __name__:
+    sync_qcrecord_data()
