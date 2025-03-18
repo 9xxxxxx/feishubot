@@ -80,11 +80,14 @@ def send_crm_data(dp):
 
 def send_checkgroup_efficiency(dp):
     logger.info('发送当月以及当天分拣退换货时效数据')
-    payload = build_card_message()
-    asbot = AsBot(dp)
-    asbot.send_card_to_group(payload)
-    time.sleep(1)
-    logger.info('发送当月以及当天分拣退换货时效数据成功')
+    payload,condition = build_card_message()
+    if condition < 0.85:
+        asbot = AsBot(dp)
+        asbot.send_card_to_group(payload)
+        time.sleep(1)
+        logger.info('发送当月以及当天分拣退换货时效数据成功')
+    else:
+        print(f'四小时内时效占比合格，为{round(condition,2)}%,达85%，不发送预警')
 
 if __name__ == '__main__':
     send_checkgroup_efficiency('人机')

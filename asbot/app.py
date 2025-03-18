@@ -10,8 +10,8 @@ class TaskScheduler:
         """初始化任务调度器"""
         self.schedule = schedule
         self.department = "售后维修部"
-        self.days = "10"
-        print('job1-发送寄修积压数据\njob2-发送物流\njob3-发送创单时间以及签收时间小于一天的数据\njob4-发送分拣时效数据卡片')
+        self.days = "15"
+        print('job1-发送寄修积压数据\njob2-发送物流\njob3-发送创单时间以及签收时间小于一天的数据\njob4-4小时分拣时效小于85%发送数据')
     # 发送寄修积压数据
     def job1(self):
         """在允许的时间范围内运行任务"""
@@ -82,5 +82,6 @@ class TaskScheduler:
 
 
 if __name__ == "__main__":
+
     scheduler = TaskScheduler()
     scheduler.run()

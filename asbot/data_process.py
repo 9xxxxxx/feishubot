@@ -359,3 +359,7 @@ def make_jx_data(path,outpath,showdate,last_path):
     send_data['风机流转量'] = send_data['风机流转量'].apply(lambda x: f"{'+' if x > 0 else ''}{x}")
     return send_data
 
+
+
+if __name__ == '__main__':
+    extractinfo(r"E:\Dev\AS_Bot\asbot\getdata\瑞云寄修积压_20250313.xlsx",'15deal.xlsx','最近15')

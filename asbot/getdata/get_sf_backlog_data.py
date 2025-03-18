@@ -81,7 +81,6 @@ def extract_need_data(df):
     发货时间 = df['new_deliveriedon'],
     一检人员 = df['laifen_systemuser_id'].apply(lambda x: x.get('name', None) if pd.notnull(x) else None),
     发货状态 = df['FormattedValues'].apply(lambda x: x.get('new_srv_rma_0.new_deliverstatus', None)),
-    物流单号 = df['new_deliverylogisticsnumber'],
     产品序列号 = df['new_userprofilesn'],
     服务人员 = df['new_srv_workorder_1.new_srv_worker_id'].apply(lambda x: x.get('name', None) if pd.notnull(x) else None),
     单据来源 = df["FormattedValues"].apply(lambda x: x.get("new_srv_rma_0.new_fromsource", None)),
@@ -91,7 +90,7 @@ def extract_need_data(df):
     df = df[[ 
        '单号','产品类型', '产品名称', '处理状态', '旧件处理状态', '检测结果', '申请类别', '旧件签收时间',
        '检测时间', '一检时间', '维修完成时间', '质检完成时间', '故障现象','发货时间','发货状态',
-       '一检人员','产品序列号','物流单号','分拣人员','服务人员','单据来源','创建时间'
+       '一检人员','产品序列号','分拣人员','服务人员','单据来源','创建时间'
     ]]
     logger.info(f"成功提取所需数据,共{df.shape[1]}列")
     return df
@@ -101,6 +100,7 @@ def get_sf_data(path, days):
     pageindex = "1"
     conditions = f'{{"new_signedon":{days}}}'
     url = generate_requrl(pageindex,conditions,'0')
+
     rs = requests.get(url)
     count = rs.json()['Data']['TotalRecordCount']
     logger.info(f"最近{days}天签收业务量共{count}单,共{count//5000+2}页数据")
@@ -111,9 +111,11 @@ def get_sf_data(path, days):
         data = fetch_api_data(url,i)
         logger.info(f"第{i}页数据已获取")
         datas.append(data)
-    
+
     df = pd.concat(datas, ignore_index=True)
     df = extract_need_data(df)
     df.to_excel(path,index=False)
     logger.info(f"已成功下载最近{days}天的数据到{path}")
-    
+
+if __name__ == '__main__':
+    get_sf_data('15天.xlsx', 1)
