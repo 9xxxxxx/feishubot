@@ -1,4 +1,8 @@
 ### GET request to example server
-GET http://localhost:8080
+
+
+GET  https://ap6-openapi.fscloud.com.cn/t/laifen/open/api/vlist/ExecuteQuery?$tenant=laifen&$timestamp=1744332456567&$reqid=8ff1a133-166e-11f0-acfd-5084929d8019&$appid=AS_department&queryid=38c53a54-813f-a0e0-0000-06f40ebdeca5&isUserQuery=true&isPreview=false&$pageindex=1&$pagesize=5000&$paging=true&extendConditions=[{"name":"new_signedon","val":"15","op":"last-x-days"}]&$orderby=createdon descending&$sign=1488823A57CB821CE25CE3C16610B10CC0C9955372661E54B666A9B21AE0D87D
+
+
 
 ###

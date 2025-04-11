@@ -99,4 +99,5 @@ def send_checkgroup_efficiency(dp):
         print(f'四小时内时效占比合格，为{round(condition,2)}%,达85%，不发送预警')
 
 if __name__ == '__main__':
-    sendgoods_data('【售后维修部】吐槽群')
+    # sendgoods_data('【售后维修部】吐槽群')
+    send_returns_data('人机')

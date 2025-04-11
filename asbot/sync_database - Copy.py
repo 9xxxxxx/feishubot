@@ -228,7 +228,6 @@ def main():
 
 def job_sync_db():
     logger.info(f'任务开始运行~at{datetime.now()}')
-
     main()
     sync_qcrecord_data()
     sync_exchange_component_data()
