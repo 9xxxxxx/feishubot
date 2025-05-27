@@ -21,9 +21,10 @@ class Config:
     IS_USER_QUERY = True
     IS_PREVIEW = False
     PAGING = True
-    CONDITIONS = '[{"name":"new_signedon","val":"not-null","op":"not-null"},{"name":"createdon","val":"before-today","op":"before-today"},{"name":"createdon","val":"60","op":"last-x-days"}]'
+    # CONDITIONS = '[{"name":"new_signedon","val":"not-null","op":"not-null"},{"name":"createdon","val":"before-today","op":"before-today"},{"name":"createdon","val":"60","op":"last-x-days"}]'
+    CONDITIONS = '[{"name":"new_signedon","val":"60","op":"last-x-days"},{"name":"new_signedon","val":"not-null","op":"not-null"},{"name":"new_signedon","val":"before-today","op":"before-today"}]'
     DB_CONFIG = {
-        'host': '172.16.101.2',
+        'host': 'localhost',
         'user': 'LJH',
         'password': 'ljhyds666',
         'database': 'demo',
@@ -108,7 +109,6 @@ def get_list():
 
 # Function to process and clean the data
 def process_data(a):
-
     logger.info("开始数据处理...")
     a_1 = a.assign(
         productmodel_name=a['new_productmodel_id'].apply(lambda x: x.get('name') if isinstance(x, dict) else None),
@@ -127,8 +127,8 @@ def process_data(a):
         new_fromsource = a['FormattedValues'].apply(lambda x: x.get('new_srv_rma_0.new_fromsource') if pd.notnull(x) else None),
         laifen_onechecktime = a['FormattedValues'].apply(lambda x: x.get('laifen_onechecktime') if pd.notnull(x) else None),
         order_id = a['new_srv_rma_0.laifen_xdorderid'],
-        new_workorder_id=a['new_workorder_id'].apply(lambda x: x.get('name') if pd.notnull(x) else None)
-
+        new_workorder_id=a['new_workorder_id'].apply(lambda x: x.get('name') if pd.notnull(x) else None),
+        new_csremarks = a['new_srv_workorder_1.new_csremarks']
     )
 
     # Select and transform columns
@@ -136,7 +136,7 @@ def process_data(a):
         ['new_rma_id', 'productmodel_name', 'product_name', 'laifen_productnumber', 'new_returnstatus', 'new_status',
          'applytype', 'per_name_fenjian', 'per_name_yijian', 'per_name_weixiu','createdon', 'new_signedon', 'new_checkon',
          'laifen_servicecompletetime', 'laifen_qualityrecordtime', 'new_deliveriedon','new_userprofilesn','laifen_jstsalesorderid',
-         'new_errorclassifly_name','new_error_name','new_fromsource','order_id','new_workorder_id','laifen_onechecktime']]
+         'new_errorclassifly_name','new_error_name','new_fromsource','order_id','new_workorder_id','laifen_onechecktime','new_csremarks']]
 
     # Replace return status and new status using map
     returnstatus_mapping = {
@@ -164,8 +164,8 @@ def process_data(a):
 
 # Function to save data to MySQL database using pymysql
 def save_to_mysql(df):
-    max_time = df['createdon'].max()
-    min_time = df['createdon'].min()
+    max_time = df['new_signedon'].max()
+    min_time = df['new_signedon'].min()
     max_time = max_time +timedelta(days=1)
 
     min_time = min_time.strftime('%Y-%m-%d')
@@ -183,15 +183,16 @@ def save_to_mysql(df):
         )
         cursor = conn.cursor()
 
-        # 清空表
+        #清空表
         # cursor.execute(f"TRUNCATE TABLE {Config.TABLE_NAME};")
         # logger.info(f"已清空表: {Config.TABLE_NAME}")
 
         # 删除已经存在的即将重复的数据
-        delete_sql = f"delete from maintenance_detail_ruiyun where date_format(createdon,'%Y-%m-%d %H:%i:%s') between date_format('{str(min_time)}','%Y-%m-%d') and date_format('{str(max_time)}','%Y-%m-%d');"
+        delete_sql = f"delete from maintenance_detail_ruiyun where date_format(new_signedon,'%Y-%m-%d %H:%i:%s') between date_format('{str(min_time)}','%Y-%m-%d') and date_format('{str(max_time)}','%Y-%m-%d');"
         logger.info(f'生成的删除语句\n{delete_sql}')
         affected_rows = cursor.execute(delete_sql)
         logger.info(f"删除了 {affected_rows} 行数据")
+
         # 动态生成列名和占位符
         columns = ', '.join(df.columns)  # 获取列名，并用逗号分隔
         placeholders = ', '.join(['%s'] * len(df.columns))  # 生成占位符，例如：%s, %s, %s

@@ -100,7 +100,7 @@ def getdata():
     df = pd.concat(datas, ignore_index=True)
 
     df = extract_need_data(df)
-    df.to_csv('tst.csv', index=False)
+    # df.to_csv('tst.csv', index=False)
     return df
 
 
@@ -111,7 +111,8 @@ def make_sendgoods_data():
     data['月份'] = data['创建时间'].dt.month
 
     df = data.query("上门取件结束时间.notnull()").copy()
-    df1 = data.query("单据来源 == '聚水潭' and 月份 !=12").copy()
+    # df1 = data.query("单据来源 == '聚水潭' and 月份 !=12").copy()
+    df1 = data.query("单据来源 == '聚水潭'").copy()
     df = pd.concat([df, df1])
 
     df['取件至今'] = (pd.to_datetime('today') - df['上门取件结束时间']).dt.days

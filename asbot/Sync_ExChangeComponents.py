@@ -10,9 +10,6 @@ from my_utility import logger
 import json
 from datetime import datetime, timedelta, UTC
 
-
-
-
 # 获取当前日期
 def get_time_interverl_condition():
     current_date = datetime.now(UTC).replace(hour=0, minute=0, second=0, microsecond=0)
@@ -59,9 +56,11 @@ def generate_requrl(pageindex):
     # extendConditions = quote([{"name":"new_checkon","val":"this-month","op":"this-month"}], safe='')
     # additionalConditions = quote({"createdon":"","new_signedon":"","new_checkon":"","laifen_qualityrecordtime":"","laifen_servicecompletetime":""}, safe='')
     # extendConditions = '[{"name":"createdon","val":["2025-01-01T00:00:00.000Z","2025-03-15T00:00:00.000Z"],"op":"between"}]'
-    extendConditions = '[{"name":"createdon","val":"yesterday","op":"yesterday"}]'
-    # extendConditions = get_time_interverl_condition()
+    # extendConditions = '[{"name":"createdon","val":"before-today","op":"before-today"},{"name":"createdon","val":"180","op":"last-x-days"}]'
 
+    # extendConditions = '[{"name":"createdon","val":["2025-05-01T16:00:00.000Z","2025-05-05T16:00:00.000Z"],"op":"between"}]'
+    # extendConditions = get_time_interverl_condition()
+    extendConditions = '[{"name":"createdon","val":"yesterday","op":"yesterday"}]'
 
     args = [appid, extendConditions, pageindex, pagesize, paging, reqid, tenant, timestamp, is_preview, is_user_query,
             queryid, key]
@@ -102,6 +101,7 @@ def extract_need_data(df):
     api_data = api_data.assign(
         服务单=df["new_srv_workorder_0.new_name"],
         创建时间 = df['FormattedValues'].apply(lambda x: x.get('createdon',None) if pd.notnull(x) else None),
+        核销状态 = df['FormattedValues'].apply(lambda x: x.get('new_returnstate',None) if pd.notnull(x) else None),
         备件名称 = df['new_product_id'].apply(lambda x: x.get("name", None) if pd.notnull(x) else None),
         备件编码=df["new_name"].apply(lambda x: x if pd.notnull(x) else None),
         创建者 = df['createdby'].apply(lambda x: x.get("name", None) if pd.notnull(x) else None),
@@ -133,6 +133,8 @@ def get_ExChange_Compo_data():
     df = extract_need_data(df)
     logger.info(f"已成功下载更换配件数据")
     return df
+
+
 
 def sync_exchange_component_data():
     conn = create_engine("mysql+pymysql://root:000000@localhost/demo")

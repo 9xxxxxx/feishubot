@@ -12,7 +12,7 @@ path = None
 # 寄修积压
 def send_sf_data(dp,days):
     global path
-    logger.info("正在初始化机器人--开始发送寄修以及退换货数据")
+    logger.info("正在初始化机器人--开始发送寄修积压数据")
     # 实例化机器人
     asbot = AsBot(dp)
 
@@ -30,7 +30,7 @@ def send_sf_data(dp,days):
 
 
     # 获取发送寄修积压数据
-    get_sf_data(path=path,days=days)
+    get_sf_data(days=days)
     data2send = make_jx_data(path=path, outpath=outfile_path, showdate= showdate,last_path=last_path)
     export_dataframe_to_image_v2(data2send, image_path1,title=asbot_config.get_jxjy_title1())
     asbot.sendimage(image_path=image_path1)
@@ -46,7 +46,7 @@ def send_sf_data(dp,days):
 
 # 分拣积压
 def send_returns_data(dp):
-    data = get_sf_data()
+    data = get_sf_data(days='15')
     image_path3 = asbot_config.image_path3
     asbot = AsBot(dp)
     dc_data = data_wait4check_and_detect(data)
@@ -55,12 +55,12 @@ def send_returns_data(dp):
     time.sleep(1)
     logger.info("分拣一检积压数据发送成功")
 
+
 # 快递物流预测
 def sendgoods_data(dp):
     logger.info('发送快递量预测数据')
     # 实例化机器人
     asbot = AsBot(dp)
-    
     image_path2 = asbot_config.image_path2
 
     # 获取发送快递量预测数据
@@ -69,6 +69,7 @@ def sendgoods_data(dp):
     asbot.sendimage(image_path=image_path2)
     time.sleep(1)
     logger.info('快递量预测数据发送成功')
+
 
 # 手工创单量
 def send_crm_data(dp):
@@ -86,6 +87,7 @@ def send_crm_data(dp):
     time.sleep(1)
     logger.info('发送一天内创单数据成功')
 
+
 # 分拣时效预警
 def send_checkgroup_efficiency(dp):
     logger.info('发送当月以及当天分拣退换货时效数据')
@@ -100,4 +102,7 @@ def send_checkgroup_efficiency(dp):
 
 if __name__ == '__main__':
     # sendgoods_data('【售后维修部】吐槽群')
-    send_returns_data('人机')
+    # send_returns_data('人机')
+    # sendgoods_data('人机')
+    # send_sf_data('人机',7)
+    send_checkgroup_efficiency("售后维修部")

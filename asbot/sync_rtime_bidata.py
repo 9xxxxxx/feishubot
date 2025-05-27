@@ -1,15 +1,26 @@
+# -*- coding: utf-8 -*-
+# @Time : 2025/4/11 17:17
+# @Author : Garry-Host
+# @FileName: sync_rtime_bidata.py
+# @Software: PyCharm
 import hashlib
 import time
 import uuid
-from urllib.parse import quote
+from datetime import datetime, time as dt_time
+import schedule
+from sqlalchemy import create_engine
 import requests
 import pandas as pd
+from asbot import AsBot
 from my_utility import logger
 
+conn = create_engine("mysql+pymysql://root:000000@localhost/demo", pool_pre_ping=True,  # 每次从连接池获取连接前会检查连接是否有效
+    pool_recycle=3600)
+    
 
 # 获取寄修数据积压数据
 
-def generate_requrl(pageindex,page,day):
+def generate_requrl(pageindex, extendConditions, page):
     logger.info(f"正在生成第{page}页的URL")
     """
     从 API 获取数据并转换为 DataFrame
@@ -27,8 +38,7 @@ def generate_requrl(pageindex,page,day):
     paging = "true"
     key = "u7BDpKHA6VSqTScpEqZ4cPKmYVbQTAxgTBL2Gtit"
     orderby = "createdon descending"
-    extendConditions = f'[{{"name":"new_signedon","val":"{day}","op":"last-x-days"}}]'
-    args = [appid, extendConditions,orderby, pageindex, pagesize, paging, reqid, tenant, timestamp, is_preview,
+    args = [appid, extendConditions, orderby, pageindex, pagesize, paging, reqid, tenant, timestamp, is_preview,
             is_user_query, queryid, key]
 
     """
@@ -65,10 +75,11 @@ def fetch_api_data(url, page):
     return df
 
 
-def extract_need_data(df):
+def extract_need_data(df, identifiy):
     df = df.assign(
-        产品类型=df["new_productmodel_id"].apply(lambda x: x.get("name", None)),
-        产品名称=df["new_product_id"].apply(lambda x: x.get("name", None)),
+        产品类型=df["new_productmodel_id"].apply(lambda x: x.get('name', None) if pd.notnull(x) else None),
+        产品名称=df["new_product_id"].apply(lambda x: x.get('name', None) if pd.notnull(x) else None),
+        创建时间=df["FormattedValues"].apply(lambda x: x.get("createdon", None)),
         旧件签收时间=df["FormattedValues"].apply(lambda x: x.get("new_signedon", None)),
         检测时间=df["FormattedValues"].apply(lambda x: x.get("new_checkon", None)),
         申请类别=df["FormattedValues"].apply(lambda x: x.get("new_srv_rma_0.new_applytype", None)),
@@ -81,47 +92,82 @@ def extract_need_data(df):
         旧件处理状态=df["FormattedValues"].apply(lambda x: x.get("new_returnstatus", None)),
         检测结果=df["FormattedValues"].apply(lambda x: x.get("new_solution", None)),
         故障现象=df['new_error_id'].apply(lambda x: x.get('name', None) if pd.notnull(x) else None),
-        发货时间=df['new_deliveriedon'],
+        发货时间=df["FormattedValues"].apply(lambda x: x.get("new_deliveriedon", None)),
         一检人员=df['laifen_systemuser_id'].apply(lambda x: x.get('name', None) if pd.notnull(x) else None),
         发货状态=df['FormattedValues'].apply(lambda x: x.get('new_srv_rma_0.new_deliverstatus', None)),
         产品序列号=df['new_userprofilesn'],
         服务人员=df['new_srv_workorder_1.new_srv_worker_id'].apply(
             lambda x: x.get('name', None) if pd.notnull(x) else None),
         单据来源=df["FormattedValues"].apply(lambda x: x.get("new_srv_rma_0.new_fromsource", None)),
-        创建时间=df["FormattedValues"].apply(lambda x: x.get("createdon", None)),
+        业务类型=identifiy
     )
     #    # 选择需要的列
     df = df[[
         '单号', '产品类型', '产品名称', '处理状态', '旧件处理状态', '检测结果', '申请类别', '旧件签收时间',
         '检测时间', '一检时间', '维修完成时间', '质检完成时间', '故障现象', '发货时间', '发货状态',
-        '一检人员', '产品序列号', '分拣人员', '服务人员', '单据来源', '创建时间'
+        '一检人员', '产品序列号', '分拣人员', '服务人员', '单据来源', '创建时间', '业务类型'
     ]]
     logger.info(f"成功提取所需数据,共{df.shape[1]}列")
     return df
 
 
-def get_sf_data(days):
-    logger.info(f"正在下载最近{days}天的数据")
+def get_sf_data(statu, identifiy):
+    logger.info(f"正在下载最近2天的{identifiy}数据")
     pageindex = "1"
-    url = generate_requrl(pageindex,'0',days)
-
+    extendConditions = f'[{{"name":"{statu}","val":"2","op":"last-x-days"}}]'
+    url = generate_requrl(pageindex, extendConditions, '0')
     rs = requests.get(url)
     count = rs.json()['Data']['TotalRecordCount']
-    logger.info(f"最近{days}天签收业务量共{count}单,共{count // 5000 + 2}页数据")
+    logger.info(f"最近2天{identifiy}业务量共{count}单,共{count // 5000 + 2}页数据")
     datas = []
 
     for i in range(1, count // 5000 + 2):
-        url = generate_requrl(str(i),i,days)
+        url = generate_requrl(str(i), extendConditions, i)
         data = fetch_api_data(url, i)
         logger.info(f"第{i}页数据已获取")
         datas.append(data)
 
     df = pd.concat(datas, ignore_index=True)
-    df = extract_need_data(df)
-    # df.to_excel(path,index=False)
-    logger.info(f"已成功下载最近{days}天的数据")
+    df = extract_need_data(df, identifiy)
+
+    logger.info(f"已成功下载最近2天的{identifiy}数据")
     return df
 
 
-if __name__ == '__main__':
-    get_sf_data()
+def get_rt_data():
+    logger.info('开干')
+    status = {"new_signedon": '签收', "new_checkon": '分拣', "laifen_servicecompletetime": '维修',
+              "laifen_qualityrecordtime": '质检', "new_deliveriedon": '发货'}
+    datas = []
+    for statu, identify in status.items():
+        data = get_sf_data(statu, identify)
+        datas.append(data)
+        logger.info(f'成功下载{data.shape[0]}条{identify}数据')
+        asbot = AsBot('人机黄乾')
+        asbot.send_text_to_group(f'{datetime.now()}成功插入{data.shape[0]}条{identify}数据')
+        logger.info(f"成功插入{data.shape[0]}{identify}条数据")
+    data = pd.concat(datas, ignore_index=True)
+    num = data.to_sql('maintenance_ruiyun_realtime', conn, if_exists='replace', index=False)
+    logger.info(f"OK啦，已经是成功存储了{num}条数据")
+    logger.info(f"执行获取数据操作，当前时间: {datetime.now().strftime('%H:%M:%S')}")
+
+
+def run_scheduler():
+    # 设置9-22点每小时任务
+    for hour in range(9, 23):
+        schedule.every().day.at(f"{hour:02d}:00").do(get_rt_data)
+
+    try:
+        while True:
+            now = datetime.now()
+            # 动态休眠：距离下次整点的剩余秒数（最多休眠60秒）
+            sleep_seconds = 60 - now.second
+            schedule.run_pending()
+            time.sleep(min(60, max(1, sleep_seconds)))  # 保证1-60秒
+    except KeyboardInterrupt:
+        logger.info("程序已停止")
+
+if __name__ == "__main__":
+    get_rt_data()
+    logger.info('lets go')
+    run_scheduler()

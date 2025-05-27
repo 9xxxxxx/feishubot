@@ -3,7 +3,6 @@ import time
 import uuid
 import hashlib
 import pandas as pd
-from scipy.stats import expon
 from sqlalchemy import create_engine
 from my_utility import logger
 import json
@@ -55,12 +54,14 @@ def generate_requrl(pageindex):
     pagesize = "5000"
     paging = "true"
     key = "u7BDpKHA6VSqTScpEqZ4cPKmYVbQTAxgTBL2Gtit"
+
     # orderby = "createdon descending"
     # extendConditions = quote([{"name":"new_checkon","val":"this-month","op":"this-month"}], safe='')
     # additionalConditions = quote({"createdon":"","new_signedon":"","new_checkon":"","laifen_qualityrecordtime":"","laifen_servicecompletetime":""}, safe='')
     # extendConditions = '[{"name":"createdon","val":["2025-03-13T00:00:00.000Z","2025-03-15T00:00:00.000Z"],"op":"between"}]'
-    # extendConditions = '[{"name":"createdon","val":"before-today","op":"before-today"},{"name":"createdon","val":"1","op":"last-x-days"}]'
+    # extendConditions = '[{"name":"createdon","val":"before-today","op":"before-today"},{"name":"createdon","val":"180","op":"last-x-days"}]'
     # extendConditions = get_time_interverl_condition()
+
     extendConditions = '[{"name":"createdon","val":"yesterday","op":"yesterday"}]'
 
     args = [appid, extendConditions, pageindex, pagesize, paging, reqid, tenant, timestamp, is_preview, is_user_query,
@@ -140,8 +141,6 @@ def get_qcrecord_data():
 
 
 # 获取当前日期
-
-
 def sync_qcrecord_data():
     conn = create_engine("mysql+pymysql://root:000000@localhost/demo")
     try:
