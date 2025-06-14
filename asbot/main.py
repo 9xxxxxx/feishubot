@@ -30,7 +30,7 @@ def send_sf_data(dp,days):
 
 
     # 获取发送寄修积压数据
-    get_sf_data(days=days)
+    get_sf_data(days=days,path=path)
     data2send = make_jx_data(path=path, outpath=outfile_path, showdate= showdate,last_path=last_path)
     export_dataframe_to_image_v2(data2send, image_path1,title=asbot_config.get_jxjy_title1())
     asbot.sendimage(image_path=image_path1)
@@ -93,6 +93,7 @@ def send_checkgroup_efficiency(dp):
     logger.info('发送当月以及当天分拣退换货时效数据')
     payload,condition = build_card_message()
     if condition < 0.85:
+    # if condition > 0:
         asbot = AsBot(dp)
         asbot.send_card_to_group(payload)
         time.sleep(1)
@@ -101,8 +102,10 @@ def send_checkgroup_efficiency(dp):
         print(f'四小时内时效占比合格，为{round(condition,2)}%,达85%，不发送预警')
 
 if __name__ == '__main__':
-    # sendgoods_data('【售后维修部】吐槽群')
     # send_returns_data('人机')
     # sendgoods_data('人机')
-    # send_sf_data('人机',7)
-    send_checkgroup_efficiency("售后维修部")
+    # send_sf_data('售后维修部',15)
+    # send_checkgroup_efficiency("【售后维修部】吐槽群")
+    # asbot = AsBot("售后维修部")
+    # asbot.send_file_to_tjh("xls", file_name="你懂的.xlsx", file_path=r"E:\Works\DataAnalysis\瑞云积压数据汇报\分析输出\瑞云系统未发货清单截至2025-05-28.xlsx",type_file="application/vnd.ms-excel")
+    # asbot.sendfile("xls", file_name=asbot_config.get_send_file_name(), file_path=asbot_config.get_output_file_path(), type_file=asbot_config.TYPE_FILE)

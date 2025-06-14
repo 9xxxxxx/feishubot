@@ -131,7 +131,34 @@ class AsBot:
         logger.info("正在发送文件~")
         if response.status_code == 200:
             logger.info("发送文件成功")
-            
+
+    def send_file_to_tjh(self, file_type, file_name, file_path,type_file):
+        url = "https://open.feishu.cn/open-apis/im/v1/messages"
+        params = {"receive_id_type": "user_id"}
+
+        file_key = self.get_filekey(file_path, file_name, file_type, type_file)
+
+        msgContent = {
+            "file_key": file_key,
+        }
+
+        req = {
+            "receive_id": "6e4997ed",
+            "msg_type": "file",
+            "content": json.dumps(msgContent)
+        }
+        payload = json.dumps(req)
+        Authorization = 'Bearer ' + self.token
+        headers = {
+            'Authorization': Authorization,
+            'Content-Type': 'application/json'
+        }
+        response = requests.request("POST", url, params=params, headers=headers, data=payload)
+        logger.info("正在发送文件到陶健宏~")
+        if response.status_code == 200:
+            logger.info("发送文件成功")
+
+
     def send_text_to_group(self,msg,):
 
         url = "https://open.feishu.cn/open-apis/im/v1/messages"

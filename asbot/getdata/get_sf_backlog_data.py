@@ -100,7 +100,7 @@ def extract_need_data(df):
     return df
 
 
-def get_sf_data(days):
+def get_sf_data(days,path=None):
     logger.info(f"正在下载最近{days}天的数据")
     pageindex = "1"
     url = generate_requrl(pageindex,'0',days)
@@ -118,7 +118,8 @@ def get_sf_data(days):
 
     df = pd.concat(datas, ignore_index=True)
     df = extract_need_data(df)
-    # df.to_excel(path,index=False)
+    if path is not None:
+        df.to_excel(path,index=False)
     logger.info(f"已成功下载最近{days}天的数据")
     return df
 

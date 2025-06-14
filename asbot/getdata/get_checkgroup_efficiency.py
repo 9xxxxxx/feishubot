@@ -1,5 +1,4 @@
-from typing import Tuple, Any
-
+from typing import Any
 import requests
 import time
 import uuid
@@ -127,14 +126,14 @@ def process_checkgroup_efficiency_data():
     data = df.query("检测时间.notnull() & 旧件签收时间.notnull() & 申请类别 != '寄修/返修'& 处理状态 != '已取消'").copy()
 
 
-    pj = data.query("产品类型 == '产成品-吹风机配件' or 产品类型 == '产成品-电动牙刷配件'").copy()
-    pj['独立配件'] = pj.groupby('物流单号')['单号'].transform('nunique')
-    pj = pj[pj['独立配件'] ==1 ].query("产品类型 == '产成品-吹风机配件' or 产品类型 == '产成品-电动牙刷配件'")
-    pj = pj.drop(['独立配件'],axis=1)
+    # pj = data.query("产品类型 == '产成品-吹风机配件' or 产品类型 == '产成品-电动牙刷配件'").copy()
+    # pj['独立配件'] = pj.groupby('物流单号')['单号'].transform('nunique')
+    # pj = pj[pj['独立配件'] ==1 ].query("产品类型 == '产成品-吹风机配件' or 产品类型 == '产成品-电动牙刷配件'")
+    # pj = pj.drop(['独立配件'],axis=1)
 
-    data = data.query("产品类型 == '产成品-吹风机' or 产品类型 == '产成品-电动牙刷'").copy()
+    # data = data.query("产品类型 == '产成品-吹风机' or 产品类型 == '产成品-电动牙刷'").copy()
 
-    data = pd.concat([data, pj], ignore_index=True)
+    # data = pd.concat([data, pj], ignore_index=True)
 
 
     data['旧件签收时间'] = pd.to_datetime(data['旧件签收时间'])
@@ -144,7 +143,7 @@ def process_checkgroup_efficiency_data():
     data['时效类型'] = pd.cut(data['时效'], bins=[0, 4, 8, 12,2480], labels=['4小时内', '4-8小时', '8-12小时','超12小时'])
     history = data[data['日期'] < date.today()].copy()
     today = data[data['日期'] == date.today()].copy()
-
+    today.to_excel('wd.xlsx',index=False)
     history = pd.DataFrame(history['时效类型'].value_counts())
     history['占比'] = history['count'] / history['count'].sum()
     history = history.rename(columns={'count': '数量'})
@@ -282,3 +281,16 @@ def build_card_message() -> tuple[str, Any]:
     logger.info("数据卡片构建成功")
     # 构造完整消息
     return json.dumps(content, ensure_ascii=False),today.loc["4小时内", "比率"]
+
+
+def send_checkgroup_efficiency(dp):
+    logger.info('发送当月以及当天分拣退换货时效数据')
+    payload,condition = build_card_message()
+    # if condition < 0.85:
+    if condition > 0:
+        asbot = AsBot(dp)
+        asbot.send_card_to_group(payload)
+        time.sleep(1)
+        logger.info('发送当月以及当天分拣退换货时效数据成功')
+    else:
+        print(f'四小时内时效占比合格，为{round(condition,2)}%,达85%，不发送预警')

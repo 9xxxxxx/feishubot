@@ -182,6 +182,7 @@ def extractinfo(path, outpath, showdate):
     logger.info(f'处理完成，文件保存至-{outpath}')
     return data_to_send
 
+
 def extractinfo_last(last_time_file_path):
     # logger.info(f'正在处理-{path}')
     df = pd.read_excel(last_time_file_path)
@@ -359,7 +360,6 @@ def make_jx_data(path,outpath,showdate,last_path):
     send_data['牙刷流转量'] = send_data['牙刷流转量'].apply(lambda x: f"{'+' if x > 0 else ''}{x}")
     send_data['风机流转量'] = send_data['风机流转量'].apply(lambda x: f"{'+' if x > 0 else ''}{x}")
     return send_data
-
 
 
 if __name__ == '__main__':
