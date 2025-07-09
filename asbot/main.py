@@ -103,9 +103,7 @@ def send_checkgroup_efficiency(dp):
 
 if __name__ == '__main__':
     # send_returns_data('人机')
-    # sendgoods_data('人机')
+    sendgoods_data('【售后维修部】吐槽群')
     # send_sf_data('售后维修部',15)
     # send_checkgroup_efficiency("【售后维修部】吐槽群")
     # asbot = AsBot("售后维修部")
-    # asbot.send_file_to_tjh("xls", file_name="你懂的.xlsx", file_path=r"E:\Works\DataAnalysis\瑞云积压数据汇报\分析输出\瑞云系统未发货清单截至2025-05-28.xlsx",type_file="application/vnd.ms-excel")
-    # asbot.sendfile("xls", file_name=asbot_config.get_send_file_name(), file_path=asbot_config.get_output_file_path(), type_file=asbot_config.TYPE_FILE)

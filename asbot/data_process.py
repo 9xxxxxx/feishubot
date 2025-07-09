@@ -75,55 +75,6 @@ def extractinfo(path, outpath, showdate):
     first_Detected_exception_all_dcf = first_Detected_exception.query('产品类型 == "产成品-吹风机"').shape[0]
     first_Detected_exception_all_ddys = first_Detected_exception.query('产品类型 == "产成品-电动牙刷"').shape[0]
 
-    dcf_quantity = {
-        '电吹风-待发货': tobedeliver_dcf,
-        '电吹风-待质检': tobeqc_dcf,
-        '电吹风-维修中': in_maintenance_dcf,
-        '电吹风-待派工': tobeqc_dcf,
-        '电吹风-待一检': checked_dcf,
-        '电吹风-待分拣': tobeqc_dcf,
-        '电吹风_分拣异常': checked_exception_all_dcf,
-        '电吹风_一检异常': first_Detected_exception_all_dcf,
-
-    }
-    status = {'状态': ['待分拣-已签收',
-                       '待维修-已分拣',
-                       '待维修-已一检',
-                       '待维修-维修中',
-                       '待质检',
-                       '待发货',
-                       '分拣异常',
-                       '一检异常',
-                       ]}
-
-    dcf = {'电吹风': [tobedeliver_dcf,
-                      tobeqc_dcf,
-                      in_maintenance_dcf,
-                      tobeqc_dcf,
-                      checked_dcf,
-                      tobeqc_dcf,
-                      checked_exception_all_dcf,
-                      first_Detected_exception_all_dcf]}
-
-    ddys = {'电动牙刷': [tobedeliver_ddys,
-                         tobeqc_ddys,
-                         in_maintenance_ddys,
-                         tobeqc_ddys,
-                         checked_ddys,
-                         tobeqc_ddys,
-                         checked_exception_all_ddys,
-                         first_Detected_exception_all_ddys]}
-
-    ddys_quantity = {
-        '电动牙刷-待发货': tobedeliver_ddys,
-        '电动牙刷-待质检': tobeqc_ddys,
-        '电动牙刷-维修中': in_maintenance_ddys,
-        '电动牙刷-待派工': first_Detected_ddys,
-        '电动牙刷-待一检': checked_ddys,
-        '电动牙刷-待分拣': Signed_ddys,
-        '电动牙刷_分拣异常': checked_exception_all_ddys,
-        '电动牙刷_一检异常': first_Detected_exception_all_ddys
-    }
     data = {'状态': ['待分拣-已签收',
                      '待维修-已分拣',
                      '待维修-已一检',
@@ -202,15 +153,6 @@ def extractinfo_last(last_time_file_path):
     first_Detected_exception = tobefix.query("旧件处理状态 == '一检异常'")
     checked_exception = tobefix.query("旧件处理状态 == '异常'")
 
-    dataall = data['单号'].shape[0]
-
-    in_maintenance_all = in_maintenance['单号'].shape[0]
-    first_Detected_all = first_Detected['单号'].shape[0]
-    Signed_all = Signed['单号'].shape[0]
-    checked_all = checked['单号'].shape[0]
-
-    checked_exception_all = checked_exception['单号'].shape[0]
-    first_Detected_exception_all = first_Detected_exception['单号'].shape[0]
 
     tobedeliver_dcf = tobedeliver.query('产品类型 == "产成品-吹风机"').shape[0]
     tobedeliver_ddys = tobedeliver.query('产品类型 == "产成品-电动牙刷"').shape[0]
@@ -236,55 +178,6 @@ def extractinfo_last(last_time_file_path):
     first_Detected_exception_all_dcf = first_Detected_exception.query('产品类型 == "产成品-吹风机"').shape[0]
     first_Detected_exception_all_ddys = first_Detected_exception.query('产品类型 == "产成品-电动牙刷"').shape[0]
 
-    dcf_quantity = {
-        '电吹风-待发货': tobedeliver_dcf,
-        '电吹风-待质检': tobeqc_dcf,
-        '电吹风-维修中': in_maintenance_dcf,
-        '电吹风-待派工': tobeqc_dcf,
-        '电吹风-待一检': checked_dcf,
-        '电吹风-待分拣': tobeqc_dcf,
-        '电吹风_分拣异常': checked_exception_all_dcf,
-        '电吹风_一检异常': first_Detected_exception_all_dcf,
-
-    }
-    status = {'状态': ['待分拣-已签收',
-                       '待维修-已分拣',
-                       '待维修-已一检',
-                       '待维修-维修中',
-                       '待质检',
-                       '待发货',
-                       '分拣异常',
-                       '一检异常',
-                       ]}
-
-    dcf = {'电吹风': [tobedeliver_dcf,
-                      tobeqc_dcf,
-                      in_maintenance_dcf,
-                      tobeqc_dcf,
-                      checked_dcf,
-                      tobeqc_dcf,
-                      checked_exception_all_dcf,
-                      first_Detected_exception_all_dcf]}
-
-    ddys = {'电动牙刷': [tobedeliver_ddys,
-                         tobeqc_ddys,
-                         in_maintenance_ddys,
-                         tobeqc_ddys,
-                         checked_ddys,
-                         tobeqc_ddys,
-                         checked_exception_all_ddys,
-                         first_Detected_exception_all_ddys]}
-
-    ddys_quantity = {
-        '电动牙刷-待发货': tobedeliver_ddys,
-        '电动牙刷-待质检': tobeqc_ddys,
-        '电动牙刷-维修中': in_maintenance_ddys,
-        '电动牙刷-待派工': first_Detected_ddys,
-        '电动牙刷-待一检': checked_ddys,
-        '电动牙刷-待分拣': Signed_ddys,
-        '电动牙刷_分拣异常': checked_exception_all_ddys,
-        '电动牙刷_一检异常': first_Detected_exception_all_ddys
-    }
     data = {'状态': ['待分拣-已签收',
                      '待维修-已分拣',
                      '待维修-已一检',

@@ -274,7 +274,7 @@ def build_card_message() -> tuple[str, Any]:
         "type": "template",
         "data": {
             "template_id": "AAqBc0EeBjtyz",
-            "template_version_name": "1.0.22",
+            "template_version_name": "1.0.24",
             "template_variable": variables  # 动态变量部分
         }
     }
@@ -286,8 +286,8 @@ def build_card_message() -> tuple[str, Any]:
 def send_checkgroup_efficiency(dp):
     logger.info('发送当月以及当天分拣退换货时效数据')
     payload,condition = build_card_message()
-    # if condition < 0.85:
-    if condition > 0:
+    if condition < 0.85:
+    # if condition > 0:
         asbot = AsBot(dp)
         asbot.send_card_to_group(payload)
         time.sleep(1)
